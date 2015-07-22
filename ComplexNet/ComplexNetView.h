@@ -86,6 +86,13 @@ public:
 	afx_msg void OnFileSaveAs();
 	afx_msg void OnFeatureAvedegree();
 	afx_msg void OnNetUrt();
+	afx_msg void OnNetMynet1();
+	afx_msg void OnDriverNodesStructuralControllability();
+	afx_msg void OnDriverNodesExactControllability();
+	afx_msg void OnDriverFastAlgo();
+	afx_msg void OnDriversRankFast();
+	afx_msg void OnSyncLamdaratio();
+	afx_msg void OnSyncOptSa();
 };
 
 #ifndef _DEBUG  // ComplexNetView.cpp 中的调试版本

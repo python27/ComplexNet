@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
       <Configuration>Debug</Configuration>
@@ -22,13 +22,15 @@
     <CharacterSet>NotSet</CharacterSet>
     <UseOfMfc>Dynamic</UseOfMfc>
     <UseOfAtl>Dynamic</UseOfAtl>
+    <PlatformToolset>v120</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <WholeProgramOptimization>true</WholeProgramOptimization>
-    <CharacterSet>Unicode</CharacterSet>
+    <CharacterSet>MultiByte</CharacterSet>
     <UseOfMfc>Dynamic</UseOfMfc>
+    <PlatformToolset>v120</PlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -128,9 +130,11 @@
     <ClInclude Include="ComplexNet.h" />
     <ClInclude Include="ComplexNetDoc.h" />
     <ClInclude Include="ComplexNetView.h" />
+    <ClInclude Include="controllability.h" />
     <ClInclude Include="DeterminDlg.h" />
     <ClInclude Include="DialogDrawCurve.h" />
     <ClInclude Include="DlgCommuNumSet.h" />
+    <ClInclude Include="DlgDrivers.h" />
     <ClInclude Include="DlgExampleNets.h" />
     <ClInclude Include="DrawCurve.h" />
     <ClInclude Include="graph.hpp" />
@@ -143,6 +147,7 @@
     <ClInclude Include="RegularDlg.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="stdafx.h" />
+    <ClInclude Include="Synchronization.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="WSSmallDlg.h" />
   </ItemGroup>
@@ -151,9 +156,11 @@
     <ClCompile Include="ComplexNet.cpp" />
     <ClCompile Include="ComplexNetDoc.cpp" />
     <ClCompile Include="ComplexNetView.cpp" />
+    <ClCompile Include="controllability.cpp" />
     <ClCompile Include="DeterminDlg.cpp" />
     <ClCompile Include="DialogDrawCurve.cpp" />
     <ClCompile Include="DlgCommuNumSet.cpp" />
+    <ClCompile Include="DlgDrivers.cpp" />
     <ClCompile Include="DlgExampleNets.cpp" />
     <ClCompile Include="DrawCurve.cpp" />
     <ClCompile Include="GroupNetDlg.cpp" />
@@ -166,6 +173,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="Synchronization.cpp" />
     <ClCompile Include="WSSmallDlg.cpp" />
   </ItemGroup>
   <ItemGroup>

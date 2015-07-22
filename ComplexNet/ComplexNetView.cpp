@@ -22,6 +22,9 @@
 #include "DrawCurve.h"
 #include "GroupNetDlg.h"
 #include "NetFileSaveAs.h"
+#include "controllability.h"
+#include "DlgDrivers.h"
+#include "Synchronization.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -78,6 +81,13 @@ BEGIN_MESSAGE_MAP(CComplexNetView, CScrollView)
 	ON_COMMAND(ID_FILE_SAVE_AS, &CComplexNetView::OnFileSaveAs)
 	ON_COMMAND(ID_FEATURE_AVEDEGREE, &CComplexNetView::OnFeatureAvedegree)
 	ON_COMMAND(ID_NET_URT, &CComplexNetView::OnNetUrt)
+	ON_COMMAND(ID_NET_MYNET1, &CComplexNetView::OnNetMynet1)
+	ON_COMMAND(ID_32785, &CComplexNetView::OnDriverNodesStructuralControllability)
+	ON_COMMAND(ID_32786, &CComplexNetView::OnDriverNodesExactControllability)
+	ON_COMMAND(ID_DRIVER_FAST_ALGO, &CComplexNetView::OnDriverFastAlgo)
+	ON_COMMAND(ID_DRIVERS_RANK_FAST, &CComplexNetView::OnDriversRankFast)
+	ON_COMMAND(ID_SYNC_LAMDARATIO, &CComplexNetView::OnSyncLamdaratio)
+	ON_COMMAND(ID_SYNC_OPT_SA, &CComplexNetView::OnSyncOptSa)
 END_MESSAGE_MAP()
 
 // CComplexNetView 构造/析构
@@ -1755,14 +1765,13 @@ void CComplexNetView::OnDeterminMei()
 	    pDoc->WriteToNetFile((char *)cdd.path.GetString(),tempnet);
 		CString tempstr;
 		tempstr=cdd.path.Left(cdd.path.GetLength()-4);
-		pDoc->DrawCircleForm(tempnet->GetTopology(),tempstr.GetString());
+		//pDoc->DrawCircleForm(tempnet->GetTopology(),tempstr.GetString());
 	}	
 }
 
 //盒计数法聚类，函数RenormalizeByBoxCounting来自NetworkFun.dll 
 void CComplexNetView::OnBoxCounting()
 {
-	// TODO: 在此添加命令处理程序代码
 	CComplexNetDoc* pDoc = GetDocument();
 	ASSERT_VALID(pDoc);
 	if(pDoc->NetTxtFileOpened==FALSE)
@@ -1777,7 +1786,6 @@ void CComplexNetView::OnBoxCounting()
 //生成社团网络，函数GenCommunityNetwork来自NetworkFun.dll
 void CComplexNetView::OnGroupnetSimple()
 {
-	// TODO: 在此添加命令处理程序代码
 	CComplexNetDoc* pDoc = GetDocument();
 	ASSERT_VALID(pDoc);
 	CGroupNetDlg cgnd;
@@ -1793,24 +1801,67 @@ void CComplexNetView::OnGroupnetSimple()
 	}	
 }
 
-//目前计算特征值函数还不好使，等待更新
 void CComplexNetView::OnSyncLamda2()
 {
-	// TODO: 在此添加命令处理程序代码
 	CComplexNetDoc* pDoc = GetDocument();
 	ASSERT_VALID(pDoc);
-	//NetworkFun.dll
-	//double a,b;
-	//目前计算特征值函数还不好使，等待更新
-	MessageBox("目前计算特征值函数还不好使，等待更新");
-	//pDoc->GetLambda2AndRatio(a,b,pDoc->unet->GetTopology());
-	
+	if (pDoc->NetTxtFileOpened == FALSE)
+	{
+		MessageBox(_T("Please open a network file first"));
+		return;
+	}
+
+	scn::UGraph::pGraph pgraph = pDoc->unet->GetTopology();
+	double ans = GetLambda2(pgraph);
+
+	char buf[1024] = { '\0' };
+	sprintf_s(buf, 1024, "该网络的第二大特征根为：%.8f", ans);
+	CString info(buf);
+	MessageBox(info, "第二大特征根计算结果", MB_ICONASTERISK);
+}
+
+void CComplexNetView::OnSyncLamdaratio()
+{
+	CComplexNetDoc* pDoc = GetDocument();
+	ASSERT_VALID(pDoc);
+	if (pDoc->NetTxtFileOpened == FALSE)
+	{
+		MessageBox(_T("Please open a network file first"));
+		return;
+	}
+
+	scn::UGraph::pGraph pgraph = pDoc->unet->GetTopology();
+	double ans = GetLambdaNRatioLambda2(pgraph);
+
+	char buf[1024] = { '\0' };
+	sprintf_s(buf, 1024, "该网络的特征比 L_N / L_2 = %.8f", ans);
+	CString info(buf);
+	MessageBox(info, "特征比计算结果", MB_ICONASTERISK);
+}
+
+void CComplexNetView::OnSyncOptSa()
+{
+	CComplexNetDoc* pDoc = GetDocument();
+	ASSERT_VALID(pDoc);
+	if (pDoc->NetTxtFileOpened == FALSE)
+	{
+		MessageBox(_T("Please open a network file first"));
+		return;
+	}
+
+	scn::UGraph::pGraph pgraph = pDoc->unet->GetTopology();	
+	SASyncOptimization sa;
+	sa.Run(pgraph);
+	 
+	char buf[1024] = { '\0' };
+	sprintf_s(buf, 1024, "算法完成，优化结果保存在 SyncOptimizationBySA.txt 文件中 !");
+	CString info(buf);
+	MessageBox(info, "模拟退火算法优化", MB_ICONASTERISK);
 }
 
 //文件保存Net,dot,Png三种格式
 void CComplexNetView::OnFileSave()
 {
-	// TODO: 在此添加命令处理程序代码
 	CComplexNetDoc* pDoc = GetDocument();
 	ASSERT_VALID(pDoc);
 	//NetworkFun.dll Net,dot,Png文件存储
@@ -1846,7 +1897,172 @@ void CComplexNetView::OnFileSaveAs()
 }
 
 
+// 网络模型由董超提出
+void CComplexNetView::OnNetMynet1()
+{
+	CComplexNetDoc* pDoc = GetDocument();
+	ASSERT_VALID(pDoc);
+	CDeterminDlg cdd;
+	cdd.path = pDoc->CurrentWorkPath;
+	cdd.title = _T("自相似增长树模型");
+	cdd.flag = 0;
+	if (cdd.DoModal() == IDOK)
+	{
+		//NetworkFun.dll 生成网络并存储Net、Dot、Png文件
+		int iteration_times = cdd.m_determin_iterations;
+
+		// *************** Network Generation Algorithm begin *************//
+		UGraph::pGraph graph(new UGraph());
+		
+		// init graph
+		graph->AddNode(0);
+		graph->AddNode(1);
+		graph->AddEdge(0, 1);
+
+		list<pair<size_t, size_t>> added_edges;
+		added_edges.clear();
+		added_edges.push_back(make_pair(0, 1));
+
+		int cur_iteration_times = 0;
+		while (cur_iteration_times < iteration_times)
+		{
+			list<pair<size_t, size_t>> new_added_edges;
+			new_added_edges.clear();
+
+			list<pair<size_t, size_t>>::iterator it;
+			for (it = added_edges.begin(); it != added_edges.end(); ++it)
+			{
+				int u = it->first;
+				int v = it->second;
+				int n = graph->GetNumberOfNodes();
+				// add middle nodes
+				graph->AddNode(n);
+				graph->AddNode(n + 1);
+				graph->AddNode(n + 2);
+				graph->RemoveEdge(u, v);
+				graph->AddEdge(u, n);
+				graph->AddEdge(v, n);
+				// add new branch nodes and edges
+				graph->AddEdge(n, n + 1);
+				graph->AddEdge(n, n + 2);
+				// update new added edge
+				new_added_edges.push_back(make_pair(n, n + 1));
+				new_added_edges.push_back(make_pair(n, n + 2));
+			}
+
+			added_edges.clear();
+			added_edges = new_added_edges;
+			cur_iteration_times += 1;
+		}
+		// ****** Network generation Algorithm end *******//
+
+		UNetwork<>::pNetwork tempnet(new UNetwork<>(graph));
+		pDoc->WriteToNetFile((char *)cdd.path.GetString(), tempnet);
+		CString tempstr;
+		tempstr = cdd.path.Left(cdd.path.GetLength() - 4);
+		//pDoc->DrawCircleForm(tempnet->GetTopology(),tempstr.GetString());
+	}
+}
 
 
+void CComplexNetView::OnDriverNodesStructuralControllability()
+{
+	CComplexNetDoc* pDoc = GetDocument();
+	ASSERT_VALID(pDoc);
+	if (pDoc->NetTxtFileOpened == FALSE)
+	{
+		MessageBox(_T("Please open a network file first"));
+		return;
+	}
 
+	scn::UGraph::pGraph pgraph = pDoc->unet->GetTopology();
+	
+	MessageBox(_T("该函数只适用于有向结构化网络!!! 功能正在完善"));
+
+}
+
+
+void CComplexNetView::OnDriverNodesExactControllability()
+{
+	CComplexNetDoc* pDoc = GetDocument();
+	ASSERT_VALID(pDoc);
+	if (pDoc->NetTxtFileOpened == FALSE)
+	{
+		MessageBox(_T("Please open a network file first"));
+		return;
+	}
+
+	scn::UGraph::pGraph pgraph = pDoc->unet->GetTopology();
+	set<int> driverNodesList;
+	int driverNodesNum = exactControllability(*pgraph, driverNodesList);
+	//int driverNodesNum = numberofDriverNodesExactControllability(*pgraph);
+
+	CString txtname;
+	txtname = pDoc->CurrentWorkPath;
+	txtname += "\\Results\\driver_nodes.txt";
+	std::ofstream fout(txtname);
+	char temp[256] = { '\0' };
+	sprintf_s(temp, 256, "%d 个驱动节点如下：", driverNodesNum);
+	fout << temp << endl;
+	for (auto it = driverNodesList.begin(); it != driverNodesList.end(); ++it)
+	{
+		fout << *it << endl;
+	}
+	fout.close();
+
+	char buf[256];
+	sprintf_s(buf, "共有 %d 驱动节点, 结果已经保存至 driver_nodes.txt", driverNodesNum);
+	CString str(buf);
+	MessageBox(buf, "驱动节点计算结果", MB_OK | MB_ICONASTERISK);
+}
+
+
+void CComplexNetView::OnDriverFastAlgo()
+{
+	CComplexNetDoc* pDoc = GetDocument();
+	ASSERT_VALID(pDoc);
+	if (pDoc->NetTxtFileOpened == FALSE)
+	{
+		MessageBox(_T("Please open a network file first"));
+		return;
+	}
+
+	MessageBox("重要提示:\n[1] 该算法适用于任何网络.\n[2] 算法只计算驱动节点的数量,如需要知道具体的驱动节点，请考虑使用【结构可控性理论】或【严格可控性理论】",
+				"算法适用性说明", 
+				MB_OK | MB_DEFBUTTON1 | MB_ICONEXCLAMATION);
+
+	scn::UGraph::pGraph pgraph = pDoc->unet->GetTopology();
+	int driverNodesNum = numberofDriverNodesExactControllability(*pgraph);
+
+	char buf[1024] = { '\0' };
+	sprintf_s(buf, 1024, "该网络共有 %d 个驱动节点", driverNodesNum);
+	CString info(buf);
+
+	MessageBox(info, "可控性计算结果", MB_OK | MB_ICONASTERISK);
+
+}
+
+
+void CComplexNetView::OnDriversRankFast()
+{
+	CComplexNetDoc* pDoc = GetDocument();
+	ASSERT_VALID(pDoc);
+	if (pDoc->NetTxtFileOpened == FALSE)
+	{
+		MessageBox(_T("Please open a network file first"));
+		return;
+	}
+
+	MessageBox("重要提示:\n[1] 该算法之适用于大型稀疏网络.\n[2] 算法只计算驱动节点的数量,如需要知道具体的驱动节点，请考虑使用【结构可控性理论】或【严格可控性理论】算法.\n[3] 该算法仅得到近似结果，如需要精确结果，考虑使用【驱动节点计算】算法",
+		"算法适用性说明.",
+		MB_OK | MB_DEFBUTTON1 | MB_ICONEXCLAMATION);
+
+	scn::UGraph::pGraph pgraph = pDoc->unet->GetTopology();
+	int driverNodesNum = numberofDriverNodesFastRankAlgorithm(*pgraph);
+
+	char buf[256] = { '\0' };
+	sprintf_s(buf, 256, "该网络共有 %d 个驱动节点", driverNodesNum);
+	CString info(buf);
+	MessageBox(info, "可控性计算结果", MB_OK | MB_ICONASTERISK);
+}
 
