@@ -64,44 +64,81 @@ void scn::WriteToNetFile(char* path, UNetwork<>::pNetwork &network)
       string temp;
       std::stringstream ss;
       //read header
+	  int wordsCnt = 0;
+	  bool foundword = false;
       while(getline(infile, line))
       {
-	 ss.str(line);
-	 if(ss>>temp && temp == "*Vertices")
-	 {//read nodes
-	    size_t numberOfNodes;
-	    ss>>numberOfNodes;
-	    size_t index;
-	    string flag;
-	    double x,y,z;
-	    for(size_t i = 0; i < numberOfNodes; i++)
-	    {
-	       getline(infile, line);
-	       ss.clear();
-	       ss.str(line);
-	       if(ss>>index>>flag>>x>>y>>z)//read content
-	       {
-		  graph->AddNode(index - 1);
-		  network->SetNodePosition(index - 1, x, y, z);
-	       }
-	    }
-	    assert(numberOfNodes == graph->GetNumberOfNodes());
-	 }
-	 else if(line == "*Edges")
-	 {//read edge
-	    size_t indexOfNode1, indexOfNode2;
-	    double weight;
-	    while(getline(infile, line))
-	    {
-	       ss.clear();
-	       ss.str(line);
-	       if(ss>>indexOfNode1>>indexOfNode2>>weight)
-		  graph->AddEdge(indexOfNode1 - 1, indexOfNode2 -1);
-	    }
-	 }
+		 ss.str(line);
+		 if(ss>>temp && temp == "*Vertices")
+		 {//read nodes
+			size_t numberOfNodes;
+			ss>>numberOfNodes;
+			size_t index;
+			string flag;
+			double x,y,z;
+			for(size_t i = 0; i < numberOfNodes; i++)
+			{
+			   getline(infile, line);
+			   ss.clear();
+			   ss.str(line);
+
+			   if (i == 0)
+			   {			   
+				   for (size_t j = 0; j < line.size(); )
+				   {
+					   while (j < line.size() && line[j] == ' ') j++;
+					   if (j < line.size() && line[j] != ' ' && line[j] != '\n'){ foundword = true; wordsCnt++; }
+					   while (j < line.size() && foundword && line[j] != ' ') j++;
+				   }
+			   }
+
+			   if (wordsCnt == 5)
+			   {
+				   if (ss >> index >> flag >> x >> y >> z)//read content
+				   {
+					   graph->AddNode(index - 1);
+					   network->SetNodePosition(index - 1, x, y, z);
+				   }
+			   }
+			   else if (wordsCnt == 2)
+			   {
+				   if (ss >> index >> flag)//read content
+				   {
+					   graph->AddNode(index - 1);
+					   x = (double)rand() / RAND_MAX;
+					   y = (double)rand() / RAND_MAX;
+					   z = (double)rand() / RAND_MAX;
+					   network->SetNodePosition(index - 1, x, y, z);
+				   }
+			   }
+
+			}
+			assert(numberOfNodes == graph->GetNumberOfNodes());
+		 }
+		 else if(line == "*Edges")
+		 {//read edge
+			size_t indexOfNode1, indexOfNode2;
+			double weight;
+			while(getline(infile, line))
+			{
+			   ss.clear();
+			   ss.str(line);
+			   if (wordsCnt == 5)
+			   {
+				   if (ss >> indexOfNode1 >> indexOfNode2 >> weight)
+					   graph->AddEdge(indexOfNode1 - 1, indexOfNode2 - 1);
+			   }
+			   else if (wordsCnt == 2)
+			   {
+				   if (ss >> indexOfNode1 >> indexOfNode2)
+					   graph->AddEdge(indexOfNode1 - 1, indexOfNode2 - 1);
+			   }
+			   
+			  
+			}
+		 }
       }
       infile.close();
-
    }
 
 void scn::DrawCircleForm(Graph::pGraph graph, std::string filename)
@@ -112,10 +149,10 @@ void scn::DrawCircleForm(Graph::pGraph graph, std::string filename)
    temp += filename + ".dot";
    temp += " -o " + filename +".png";
    
-   if(std::system(temp.c_str()) != 0)
-   {
-      assert(false);
-   }
+   //if(std::system(temp.c_str()) != 0)
+   //{
+   //   assert(false);
+   //}
 }
 
 void scn::WriteToDotFile(Graph::pGraph graph, std::string filename)
@@ -772,4 +809,11 @@ UGraph::pGraph scn::GenTreeStructuredSFSW(size_t numberOfNodes)
       leaf_queue.push(make_pair(right, temp));
    }
    return graph;
+}
+
+UGraph::pGraph scn::GenSelfSimilarityGrowingTreeNetwork(size_t times)
+{
+	//TODO
+	UGraph::pGraph graph(new UGraph());
+	return graph;
 }

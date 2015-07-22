@@ -1,6 +1,8 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 11.00
-# Visual Studio 2010
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2013
+VisualStudioVersion = 12.0.21005.1
+MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ComplexNet", "ComplexNet\ComplexNet.vcxproj", "{01D5D38F-84F3-43A9-9965-2EED0A56DCE9}"
 	ProjectSection(ProjectDependencies) = postProject
 		{ACFCCB76-8F1E-4D8A-B0B2-FF3D70C17869} = {ACFCCB76-8F1E-4D8A-B0B2-FF3D70C17869}
@@ -25,5 +27,8 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(Performance) = preSolution
+		HasPerformanceSessions = true
 	EndGlobalSection
 EndGlobal

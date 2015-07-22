@@ -171,4 +171,6 @@ namespace scn
  * @return void
  */
    NETWORKLIBDLL void DrawCircleForm(Graph::pGraph graph,std::string filename);
+
+   UGraph::pGraph GenSelfSimilarityGrowingTreeNetwork(size_t times);
 };
